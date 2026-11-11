@@ -140,7 +140,10 @@ qm set <VMID> --ciuser cloud-user --sshkeys ~/.ssh/authorized_keys --ipconfig0 i
 3. Merging the PR + pushing a `v<VERSION>` tag fires `release.yml`,
    which calls the shared `build-libguestfs-image.yml@main` reusable
    workflow.
-4. Each build downloads the upstream qcow2, runs `customize.sh`,
+4. Each build reads Oracle's published SHA-256 for the exact template
+   from `oracle-linux-templates.html` (`build/upstream-sha256.sh`),
+   downloads the upstream qcow2 and fails on a checksum mismatch, then
+   runs `customize.sh`,
    sysprep, sparsify, signs, and uploads to Garage + R2 under
    `s3://oracle-linux-8/<version>/`.
 
@@ -151,6 +154,7 @@ VERSION                          single line, e.g. "8.10-b287"
 build/
   customize.sh                   virt-customize hook (qcow2 path as $1)
   detect-upstream.sh             parses oracle-linux-templates.html
+  upstream-sha256.sh             Oracle SHA-256 of one template from that page
 .github/workflows/
   release.yml                    calls build-libguestfs-image.yml on tag push
   watch.yml                      daily cron, calls upstream-watch.yml

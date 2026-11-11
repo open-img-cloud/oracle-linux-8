@@ -25,6 +25,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       update_id: ${{ steps.v.outputs.update_id }}
       build_id: ${{ steps.v.outputs.build_id }}
+      upstream_sha256: ${{ steps.sum.outputs.sha256 }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
       - id: v
@@ -55,6 +56,19 @@ jobs:
           echo "build_id=$build_id" >> "$GITHUB_OUTPUT"
           echo "Resolved: version=$v update_id=$update_id build_id=$build_id"
 
+      # Oracle publishes no checksum file next to the templates, only a
+      # SHA256 column on oracle-linux-templates.html: extract the hash of
+      # the exact file we build from, the build then fails on a mismatch.
+      - id: sum
+        shell: bash
+        env:
+          FILE: OL8U${{ steps.v.outputs.update_id }}_x86_64-kvm-b${{ steps.v.outputs.build_id }}.qcow2
+        run: |
+          set -euo pipefail
+          sha256=$(bash build/upstream-sha256.sh "$FILE")
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          echo "Oracle published SHA-256 for $FILE: $sha256"
+
   build:
     needs: resolve-version
     name: Build
@@ -68,6 +82,7 @@ jobs:
       # detect-upstream and release.yml in sync: the VERSION file is the
       # only source of truth for U + B.
       upstream_url: 'https://yum.oracle.com/templates/OracleLinux/OL8/u${{ needs.resolve-version.outputs.update_id }}/x86_64/OL8U${{ needs.resolve-version.outputs.update_id }}_x86_64-kvm-b${{ needs.resolve-version.outputs.build_id }}.qcow2'
+      upstream_sha256: ${{ needs.resolve-version.outputs.upstream_sha256 }}
       decompress: none
       customize_script: build/customize.sh
       run_sysprep: true
