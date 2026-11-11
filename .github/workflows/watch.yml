@@ -1,0 +1,16 @@
+name: Watch upstream
+
+on:
+  schedule:
+    - cron: '11 6 * * *'   # daily 06:11 UTC, free slot before the other watchers
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  watch:
+    uses: open-img-cloud/.github/.github/workflows/upstream-watch.yml@main
+    with:
+      os_name: oracle-linux-8
