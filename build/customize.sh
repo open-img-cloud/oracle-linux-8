@@ -41,6 +41,9 @@ if [ -n "$d" ] && ! grep -q "def load_text_file" "$d/util.py"; then \
 fi'
 
 virt-customize -a "$QCOW2" \
+  --mkdir /var/lib/cloud/scripts/per-boot \
+  --copy-in "$(dirname -- "${BASH_SOURCE[0]}")/config/oic-grow-lvm-root.sh:/var/lib/cloud/scripts/per-boot/" \
+  --run-command 'chmod 0755 /var/lib/cloud/scripts/per-boot/oic-grow-lvm-root.sh' \
   --run-command "$CI_FIX" \
   --run-command 'rm -rf /var/cache/dnf /var/cache/yum /tmp/* /var/tmp/*'
 
